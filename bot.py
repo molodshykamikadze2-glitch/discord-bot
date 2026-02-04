@@ -7,7 +7,7 @@ from datetime import datetime, time
 import pytz
 
 # ===== Flask (фейковий сайт) =====
-app = Flask(name)
+app = Flask(__name__)
 
 @app.route("/")
 def home():
