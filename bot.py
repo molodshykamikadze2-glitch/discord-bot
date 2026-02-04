@@ -6,7 +6,7 @@ from discord.ext import tasks
 from datetime import datetime
 import pytz
 
-================= Flask (фейковий сайт) =================
+# ================= Flask (фейковий сайт) =================
 app = Flask(__name__)
 
 @app.route("/")
@@ -17,7 +17,7 @@ def run_web():
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
 
-================= Discord bot =================
+# ================= Discord bot =================
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
@@ -32,7 +32,7 @@ async def on_ready():
     cleanup_messages.start()
     send_invite.start()
 
-===== ОЧИСТКА СТАРИХ ПОВІДОМЛЕНЬ (11:55) =====
+# ===== ОЧИСТКА СТАРИХ ПОВІДОМЛЕНЬ (11:55) =====
 @tasks.loop(minutes=1)
 async def cleanup_messages():
     now = datetime.now(KYIV_TZ)
@@ -46,7 +46,7 @@ async def cleanup_messages():
             if message.author == client.user:
                 await message.delete()
 
-===== ВІДПРАВКА ІНВАЙТУ (12:00) =====
+# ===== ВІДПРАВКА ІНВАЙТУ (12:00) =====
 @tasks.loop(minutes=1)
 async def send_invite():
     now = datetime.now(KYIV_TZ)
@@ -65,7 +65,7 @@ async def send_invite():
             f"🔗 Автоматичне запрошення:\n{invite.url}"
         )
 
-================= ЗАПУСК =================
+# ================= ЗАПУСК =================
 if __name__ == "__main__":
     threading.Thread(target=run_web).start()
     client.run(TOKEN)
