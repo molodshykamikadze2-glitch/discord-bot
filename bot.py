@@ -1,64 +1,49 @@
 import os
-import asyncio
+import threading
+from flask import Flask
 import discord
-from datetime import datetime, date
+from discord.ext import tasks
+from datetime import datetime, time
 import pytz
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-CHANNEL_ID = 1468565575658766438  # <-- СЮДИ ВСТАВ ID КАНАЛУ
+# ===== Flask (фейковий сайт) =====
+app = Flask(name)
 
+@app.route("/")
+def home():
+    return "OK"  # навіть цього достатньо
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# ===== Discord bot =====
 intents = discord.Intents.default()
-bot = discord.Client(intents=intents)
+client = discord.Client(intents=intents)
 
-tz = pytz.timezone("Europe/Kyiv")
-last_sent_date = None
+TOKEN = os.getenv("DISCORD_TOKEN")
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
-
-@bot.event
+@client.event
 async def on_ready():
-    print(f"✅ Бот увійшов як {bot.user}")
-    bot.loop.create_task(invite_scheduler())
+    print(f"Bot logged in as {client.user}")
+    send_invite.start()
 
+@tasks.loop(minutes=1)
+async def send_invite():
+    kyiv = pytz.timezone("Europe/Kyiv")
+    now = datetime.now(kyiv)
 
-async def invite_scheduler():
-    global last_sent_date
+    if now.hour == 12 and now.minute == 0:
+        channel = client.get_channel(CHANNEL_ID)
+        if channel:
+            invite = await channel.create_invite(
+                max_uses=5,
+                max_age=86400
+            )
+            await channel.send(f"🔗 Автоматичне запрошення:\n{invite.url}")
 
-    await bot.wait_until_ready()
-    channel = bot.get_channel(CHANNEL_ID)
-
-    if channel is None:
-        print("❌ Канал не знайдено. Перевір CHANNEL_ID")
-        return
-
-    while True:
-        now = datetime.now(tz)
-
-        # Якщо рівно 12:00 і ще не кидали сьогодні
-        if now.hour == 12 and now.minute == 0:
-            today = date.today()
-
-            if last_sent_date != today:
-                try:
-                    invite = await channel.create_invite(
-                        max_uses=5,
-                        max_age=86400,
-                        unique=True
-                    )
-
-                    await channel.send(
-                        f"🔗 Автоматичне запрошення (5 використань / 1 день):\n{invite.url}"
-                    )
-
-                    last_sent_date = today
-                    print("✅ Інвайт відправлено")
-
-                except Exception as e:
-                    print(f"❌ Помилка при створенні інвайта: {e}")
-
-            # щоб не спамив у цю ж хвилину
-            await asyncio.sleep(61)
-
-        await asyncio.sleep(5)
-
-
-bot.run(TOKEN)
+# ===== Запуск =====
+if name == "main":
+    threading.Thread(target=run_web).start()
+    client.run(TOKEN)
