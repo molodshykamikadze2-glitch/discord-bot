@@ -6,7 +6,7 @@ import os
 import pytz
 
 TOKEN = os.getenv("DISCORD_TOKEN")  # ← тільки так
-CHANNEL_ID = 123456789012345678     # ← ID каналу
+CHANNEL_ID = 1468565575658766438     # ← ID каналу
 
 intents = discord.Intents.default()
 intents.message_content = True
