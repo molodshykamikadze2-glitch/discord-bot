@@ -44,6 +44,6 @@ async def send_invite():
             await channel.send(f"🔗 Автоматичне запрошення:\n{invite.url}")
 
 # ===== Запуск =====
-if name == "main":
+if __name__ == "__main__":
     threading.Thread(target=run_web).start()
     client.run(TOKEN)
